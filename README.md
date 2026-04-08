@@ -14,7 +14,6 @@ embed each video as an HTML5 `<video>` element with autoplay-on-scroll.
 |---|---|
 | `index.html` | 720p inferences (30 steps, drop@22, first_frame + face ref) |
 | `native_480p/` | 480p native inferences (15 steps, default sampling) |
-| `depth_inferences/` | Depth-reprojection experiments using the first-frame pointcloud reprojected onto each camera view |
 
 ## Local development
 
