@@ -115,6 +115,21 @@ let observer = new IntersectionObserver((entries) => {
   }
 }, { threshold: 0.3 });
 
+// Some browsers (Safari, Chrome without prior page-engagement) block
+// programmatic .play() until the user has interacted with the document.
+// Listen once for any user gesture, then force-play every visible video.
+let autoplayUnlocked = false;
+function unlockAutoplay() {
+  if (autoplayUnlocked) return;
+  autoplayUnlocked = true;
+  for (const v of document.querySelectorAll('video')) {
+    v.play().catch(() => {});
+  }
+}
+['pointerdown', 'touchstart', 'keydown', 'wheel', 'scroll'].forEach(evt => {
+  window.addEventListener(evt, unlockAutoplay, { once: true, passive: true });
+});
+
 function sampleIdFromFile(name) {
   return name.replace(ID_RE, '').replace(/\.mp4$/, '');
 }
@@ -170,7 +185,7 @@ function render(files) {
     video.muted = true;
     video.loop = true;
     video.playsInline = true;
-    video.preload = 'metadata';
+    video.preload = 'auto';
     video.addEventListener('click', () => {
       if (video.requestFullscreen) video.requestFullscreen();
       else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
