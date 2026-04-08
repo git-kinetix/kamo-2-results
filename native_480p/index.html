@@ -103,6 +103,7 @@ const countEl = document.getElementById('count');
 const statusEl = document.getElementById('status');
 const refreshBtn = document.getElementById('refresh');
 
+// Play/pause videos as they enter / leave the viewport.
 let observer = new IntersectionObserver((entries) => {
   for (const e of entries) {
     const v = e.target;
@@ -113,6 +114,18 @@ let observer = new IntersectionObserver((entries) => {
     }
   }
 }, { threshold: 0.3 });
+
+// Lazy-load video src so the browser only downloads videos that are near the
+// viewport. Large rootMargin pre-fetches a couple of screen heights ahead so
+// the UX is unchanged for normal scrolling.
+const lazyObserver = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (e.isIntersecting && !e.target.src && e.target.dataset.lazySrc) {
+      e.target.src = e.target.dataset.lazySrc;
+      lazyObserver.unobserve(e.target);
+    }
+  }
+}, { rootMargin: '2000px 0px' });
 
 // Some browsers (Safari, Chrome without prior page-engagement) block
 // programmatic .play() until the user has interacted with the document.
@@ -180,7 +193,8 @@ function render(files) {
     label.className = 'label';
     label.innerHTML = '<strong>' + sampleIdFromFile(f) + '</strong>';
     const video = document.createElement('video');
-    video.src = videoUrl(f);
+    // Lazy: keep the URL in dataset, set .src only when card scrolls near the viewport.
+    video.dataset.lazySrc = videoUrl(f);
     video.muted = true;
     video.loop = true;
     video.playsInline = true;
@@ -193,6 +207,7 @@ function render(files) {
     card.appendChild(video);
     grid.appendChild(card);
     observer.observe(video);
+    lazyObserver.observe(video);
   }
   for (const [f, card] of Object.entries(existing)) {
     if (!seen.has(f)) {
